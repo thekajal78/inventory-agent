@@ -22,11 +22,17 @@ db.commit()
 
 # Create 20 products
 categories = ["electronics", "clothing", "food", "furniture", "sports"]
+product_names = [
+    "Laptop", "Webcam", "Microphone", "Printer", "Desk Lamp",
+    "Keyboard", "Mouse", "Monitor", "Headphones", "USB Hub",
+    "Smartphone", "Tablet", "Speaker", "Charger", "Hard Drive",
+    "Router", "Projector", "Scanner", "Smart Watch", "Camera"
+]
 products = []
-for i in range(1, 21):
+for i, pname in enumerate(product_names, start=1):
     p = Product(
         sku=f"SKU-{i:04d}",
-        name=f"Product {i}",
+        name=pname,
         category=random.choice(categories),
         unit_cost=round(random.uniform(10, 500), 2),
         reorder_qty=random.randint(50, 200),
