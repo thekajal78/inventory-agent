@@ -27,31 +27,23 @@ def forecast_node(state: AgentState) -> AgentState:
 
 # ─── NODE 2: RAG (supplier retrieval) ───────────────────────────
 def rag_node(state: AgentState) -> AgentState:
-    print(f" Node 2: Retrieving supplier information...")
+    print(f" Node 2: RAG semantic search for best supplier...")
     try:
-        with engine.connect() as conn:
-            suppliers = pd.read_sql("""
-                SELECT name, lead_time_days, reliability,
-                       cost_per_unit, min_order_qty, payment_terms
-                FROM suppliers
-                ORDER BY reliability DESC
-            """, conn)
+        from agent.tools.supplier_rag import query_best_supplier
 
-        docs = []
-        for _, s in suppliers.iterrows():
-            docs.append(
-                f"Supplier: {s['name']} | "
-                f"Lead time: {s['lead_time_days']} days | "
-                f"Reliability: {int(s['reliability']*100)}% | "
-                f"Cost: ₹{s['cost_per_unit']}/unit | "
-                f"MOQ: {s['min_order_qty']} units | "
-                f"Payment: {s['payment_terms']}"
-            )
-        state["supplier_docs"] = "\n".join(docs)
-        print(f"   Found {len(suppliers)} suppliers")
+        urgency = "CRITICAL" if state["doi"] < 3 else "WARNING" if state["doi"] < 7 else "NORMAL"
+
+        supplier_docs = query_best_supplier(
+            product_name=state["product_name"],
+            urgency=urgency,
+            qty=state["reorder_qty"]
+        )
+
+        state["supplier_docs"] = supplier_docs
+        print(f"   RAG retrieved top 3 suppliers via semantic search")
     except Exception as e:
         state["supplier_docs"] = "No supplier data available"
-        print(f"   ⚠️ Supplier fetch failed: {e}")
+        print(f"   ⚠️ RAG failed: {e}")
     return state
 
 # ─── NODE 3: LLM Decision ────────────────────────────────────────
