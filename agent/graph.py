@@ -6,6 +6,7 @@ import json
 from dotenv import load_dotenv
 from groq import Groq
 from langgraph.graph import StateGraph, END
+from agent.notifications import notify_auto_order, notify_escalation
 
 from agent.state import AgentState
 from agent.audit import log_decision
@@ -121,7 +122,7 @@ Respond ONLY with a valid JSON object, no explanation, no markdown:
 
 # ─── NODE 4: Auto Execute ────────────────────────────────────────
 def auto_act_node(state: AgentState) -> AgentState:
-    print(f"⚡ Node 4: Auto-executing decision...")
+    print(f" Node 4: Auto-executing decision...")
     from agent.tools.supplier_selector import score_suppliers
     decision = state["decision"]
     urgency  = decision.get("urgency", "NORMAL")
@@ -153,6 +154,7 @@ def auto_act_node(state: AgentState) -> AgentState:
     print(f"    AUTO EXECUTED | PO: {po_ref}")
     print(f"    {state['product_name']} — {decision['recommended_qty']} units "
           f"from {decision['selected_supplier']}")
+    notify_auto_order(state)
     return state
     
 
