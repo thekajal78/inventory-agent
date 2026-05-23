@@ -121,14 +121,28 @@ Respond ONLY with a valid JSON object, no explanation, no markdown:
 
 # ─── NODE 4: Auto Execute ────────────────────────────────────────
 def auto_act_node(state: AgentState) -> AgentState:
-    print(f" Node 4: Auto-executing decision...")
+    print(f"⚡ Node 4: Auto-executing decision...")
+    from agent.tools.supplier_selector import score_suppliers
     decision = state["decision"]
+    urgency  = decision.get("urgency", "NORMAL")
+
+    # Get unit cost from scoring
+    scored    = score_suppliers(decision["recommended_qty"])
+    unit_cost = 100
+    for s in scored:
+        if s["name"].lower() in decision["selected_supplier"].lower():
+            unit_cost = s["cost_per_unit"]
+            break
 
     po_ref = raise_purchase_order(
         product_id=    state["product_id"],
         product_name=  state["product_name"],
         supplier_name= decision["selected_supplier"],
-        qty=           decision["recommended_qty"]
+        qty=           decision["recommended_qty"],
+        unit_cost=     unit_cost,
+        urgency=       urgency,
+        confidence=    state["confidence"],
+        reason=        decision.get("reason", "")
     )
 
     state["po_reference"]  = po_ref
@@ -137,10 +151,10 @@ def auto_act_node(state: AgentState) -> AgentState:
     log_decision(state, auto_executed=True)
 
     print(f"    AUTO EXECUTED | PO: {po_ref}")
-    print(f"    Alert: {state['product_name']} — {decision['recommended_qty']} units "
-          f"ordered from {decision['selected_supplier']}")
-    print(f"   Reason: {decision['reason']}")
+    print(f"    {state['product_name']} — {decision['recommended_qty']} units "
+          f"from {decision['selected_supplier']}")
     return state
+    
 
 # ─── NODE 5: Escalate ────────────────────────────────────────────
 def escalate_node(state: AgentState) -> AgentState:
