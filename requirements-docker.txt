@@ -1,0 +1,26 @@
+fastapi
+uvicorn
+sqlalchemy
+psycopg2-binary
+alembic
+pandas
+numpy==1.26.4
+scikit-learn
+xgboost
+torch==2.1.0 --index-url https://download.pytorch.org/whl/cpu 
+langchain
+langchain-community
+langgraph
+kafka-python
+redis
+groq
+python-dotenv
+pydantic
+pydantic-settings
+httpx
+chromadb
+sentence-transformers
+python-multipart
+mlflow
+openai
+requests

@@ -1,0 +1,79 @@
+version: '3.8'
+
+services:
+
+  postgres:
+    image: timescale/timescaledb:latest-pg15
+    container_name: timescaledb
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: pass
+      POSTGRES_DB: inventory
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d inventory"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.4.0
+    container_name: zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+    ports:
+      - "2181:2181"
+
+  kafka:
+    image: confluentinc/cp-kafka:7.4.0
+    container_name: kafka
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    ports:
+      - "9092:9092"
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    ports:
+      - "6379:6379"
+
+  api:
+    build: .
+    container_name: inventory-api
+    ports:
+      - "8000:8000"
+    environment:
+      - DB_URL=postgresql://user:pass@postgres:5432/inventory
+      - KAFKA_BROKER=kafka:9092
+    env_file:
+      - .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+    volumes:
+      - ./ml/models:/app/ml/models
+      - ./data/chroma_db:/app/data/chroma_db
+    restart: unless-stopped
+
+  frontend:
+    build: ./frontend
+    container_name: inventory-frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - api
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
