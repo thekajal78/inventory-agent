@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
-const API = 'http://localhost:8000';
+const API = '';
 
 export default function StockTable() {
   const [products, setProducts] = useState([]);

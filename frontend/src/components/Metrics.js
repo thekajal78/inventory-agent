@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
-const API = 'http://localhost:8000';
+const API = '';
 
 export default function Metrics() {
   const [metrics, setMetrics] = useState(null);
@@ -10,18 +10,19 @@ export default function Metrics() {
 
   useEffect(() => {
     const fetchAll = async () => {
+      let metricsData = null;
+      let ordersData = [];
       try {
-        const [mRes, oRes] = await Promise.all([
-          axios.get(`${API}/api/inventory/metrics`),
-          axios.get(`${API}/api/purchase-orders`)
-        ]);
-        setMetrics(mRes.data);
-        setOrders(oRes.data.orders || []);
-      } catch (e) {
-        console.error(e);
-      } finally {
-        setLoading(false);
-      }
+        const mRes = await axios.get(`${API}/api/inventory/metrics`);
+        metricsData = mRes.data;
+      } catch(e) { console.error('metrics failed', e); }
+      try {
+        const oRes = await axios.get(`${API}/api/purchase-orders`);
+        ordersData = oRes.data.orders || [];
+      } catch(e) { console.error('orders failed', e); }
+      setMetrics(metricsData);
+      setOrders(ordersData);
+      setLoading(false);
     };
     fetchAll();
   }, []);
