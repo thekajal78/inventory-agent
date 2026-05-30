@@ -1,6 +1,3 @@
-import sys
-sys.path.append("C:\\Users\\KIIT0001\\inventory-agent")
-
 import pickle
 import os
 import torch

@@ -1,6 +1,3 @@
-import sys
-sys.path.append("C:\\Users\\KIIT0001\\inventory-agent")
-
 import os
 os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 
