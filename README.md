@@ -32,73 +32,77 @@ This system autonomously manages inventory by:
 ---
 
 ## 🏗️ System Architecture
+
+```
 ┌─────────────────────────────────────────────────────┐
 │           Layer 0 — React Dashboard                  │
 │   Live Stock │ AI Decisions │ Forecast │ Metrics     │
 └──────────────────────┬──────────────────────────────┘
-│
+                       │
 ┌──────────────────────▼──────────────────────────────┐
 │           Layer 1 — FastAPI Backend                  │
 │         REST API · CORS · SQLAlchemy ORM             │
 └──────────────────────┬──────────────────────────────┘
-│
+                       │
 ┌──────────────────────▼──────────────────────────────┐
 │        Layer 2 — Data Infrastructure                 │
 │   PostgreSQL · TimescaleDB · Apache Kafka · Redis    │
 └──────────────────────┬──────────────────────────────┘
-│
+                       │
 ┌──────────────────────▼──────────────────────────────┐
 │        Layer 3 — ETL Pipeline                        │
 │   Extract · Clean · Feature Engineer · Load          │
 │   Lag features · Rolling avg · Calendar features     │
 └──────────────────────┬──────────────────────────────┘
-│
+                       │
 ┌──────────────────────▼──────────────────────────────┐
 │        Layer 4 — ML Forecasting Engine               │
 │   Prophet (30%) + XGBoost (45%) + LSTM (25%)         │
-│   Ensemble prediction · 75–85% confidence            │
+│   Ensemble prediction · 75-85% confidence            │
 └──────────────────────┬──────────────────────────────┘
-│
-┌────────▼────────┐
-│  Decision Gate  │
-│ Stock < threshold?│
-└────────┬────────┘
-YES   │   NO → Keep monitoring
-│
+                       │
+              ┌────────▼────────┐
+              │  Decision Gate  │
+              │ Stock below     │
+              │  threshold?     │
+              └────────┬────────┘
+                YES    │    NO → Keep monitoring
+                       │
 ┌──────────────────────▼──────────────────────────────┐
 │        Layer 5 — LangGraph AI Agent                  │
 │                                                      │
-│  [Forecast] → [RAG Search] → [LLM Decide]           │
-│       → [Auto Execute / Escalate]                    │
+│  [Forecast] → [RAG Search] → [LLM Decide]            │
+│            → [Auto Execute / Escalate]               │
 │                                                      │
 │  Node 1: Predict 7-day demand                        │
 │  Node 2: RAG semantic supplier search                │
 │  Node 3: Groq LLM reasoning → JSON decision          │
-│  Node 4: Auto-raise PO (confidence ≥ 80%)           │
+│  Node 4: Auto-raise PO (confidence >= 80%)           │
 │  Node 5: Escalate to human (confidence < 80%)        │
 └──────────────────────┬──────────────────────────────┘
-│
+                       │
 ┌──────────────────────▼──────────────────────────────┐
 │        Layer 6 — RAG System                          │
 │   ChromaDB vector DB · sentence-transformers         │
 │   Semantic search · Top-3 supplier retrieval         │
 └──────────────────────┬──────────────────────────────┘
-│
+                       │
 ┌──────────────────────▼──────────────────────────────┐
 │        Layer 7 — Supplier Scoring                    │
 │   Reliability 35% · Lead time 30%                    │
-│   Cost 25% · MOQ fit 10%                            │
+│   Cost 25% · MOQ fit 10%                             │
 └──────────────────────┬──────────────────────────────┘
-│
+                       │
 ┌──────────────────────▼──────────────────────────────┐
 │        Layer 8 — ERP / PO System                     │
 │   Purchase Orders · Stock movements · Audit trail    │
 └──────────────────────┬──────────────────────────────┘
-│
+                       │
 ┌──────────────────────▼──────────────────────────────┐
 │        Layer 9 — Notifications                       │
 │   Slack Webhook · Email (Brevo SMTP) · SMS (Twilio)  │
 └─────────────────────────────────────────────────────┘
+```
 
 ---
 
@@ -150,7 +154,10 @@ YES   │   NO → Keep monitoring
 ## 🤖 ML Models
 
 ### Ensemble Formula
+
+```
 Ensemble = Prophet (30%) + XGBoost (45%) + LSTM (25%)
+```
 
 | Model | Type | Strength |
 |-------|------|----------|
@@ -159,11 +166,13 @@ Ensemble = Prophet (30%) + XGBoost (45%) + LSTM (25%)
 | LSTM | Deep learning (PyTorch) | Long-term temporal dependencies |
 
 ### Features Engineered
-- Calendar: day_of_week, month, quarter, is_weekend, is_month_end
-- Lag: lag_1, lag_3, lag_7, lag_14, lag_30
-- Rolling: roll_mean_7, roll_mean_14, roll_mean_30, roll_std_7
+
+- Calendar: `day_of_week`, `month`, `quarter`, `is_weekend`, `is_month_end`
+- Lag: `lag_1`, `lag_3`, `lag_7`, `lag_14`, `lag_30`
+- Rolling: `roll_mean_7`, `roll_mean_14`, `roll_mean_30`, `roll_std_7`
 
 ### Confidence Score
+
 - Models agreement → confidence percentage (60–95%)
 - Auto-execute if confidence ≥ 80%
 - Escalate to human if confidence < 80%
@@ -189,18 +198,21 @@ Ensemble = Prophet (30%) + XGBoost (45%) + LSTM (25%)
 ## 🚀 Local Setup
 
 ### Prerequisites
+
 - Python 3.11+
 - Node.js 18+
 - Docker Desktop
 - Conda
 
 ### Step 1 — Clone
+
 ```bash
 git clone https://github.com/thekajal78/inventory-agent.git
 cd inventory-agent
 ```
 
 ### Step 2 — Environment
+
 ```bash
 conda create -n inventory python=3.11
 conda activate inventory
@@ -208,7 +220,9 @@ pip install -r requirements-docker.txt
 ```
 
 ### Step 3 — Environment variables
+
 Create `.env` file:
+
 ```env
 DB_URL=postgresql://user:pass@localhost:5432/inventory
 GROQ_API_KEY=gsk_your_key_here
@@ -221,17 +235,20 @@ EMAIL_ADDRESS=your@email.com
 ```
 
 ### Step 4 — Start Docker
+
 ```bash
 docker-compose up -d
 ```
 
 ### Step 5 — Seed database
+
 ```bash
 python data/pipelines/load_superstore.py
 python data/etl_pipeline.py
 ```
 
 ### Step 6 — Train models
+
 ```bash
 python ml/prophet_model.py
 python ml/xgboost_model.py
@@ -239,28 +256,35 @@ python ml/lstm_model.py
 ```
 
 ### Step 7 — Index suppliers
+
 ```bash
 python agent/tools/supplier_rag.py
 ```
 
 ### Step 8 — Open dashboard
+
+```
 http://localhost:3000
+```
 
 ---
 
 ## 💻 Usage
 
 ### Run AI Agent manually
+
 ```bash
 python agent/graph.py
 ```
 
 ### Run agent in continuous loop
+
 ```bash
 python run_agent_loop.py
 ```
 
-### Simulate low stock (for testing)
+### Simulate low stock for testing
+
 ```python
 from api.db import engine
 from sqlalchemy import text
@@ -272,14 +296,18 @@ with engine.begin() as conn:
 ```
 
 ### Start MLflow tracking UI
+
 ```bash
 mlflow server --host 0.0.0.0 --port 5000 --backend-store-uri sqlite:///mlflow.db
-# Open http://localhost:5000
 ```
+
+Open http://localhost:5000
 
 ---
 
 ## 📁 Project Structure
+
+```
 inventory-agent/
 ├── api/                          # FastAPI backend
 │   ├── main.py                   # App entry point + CORS
@@ -328,21 +356,25 @@ inventory-agent/
 ├── requirements-docker.txt       # Python dependencies
 ├── render.yaml                   # Render deployment config
 └── render_seed.py                # Render DB seeder
+```
 
 ---
 
 ## 🌐 Deployment
 
 ### Frontend — Vercel
+
 - Auto-deploys on every `git push` to main
 - URL: https://inventory-agent-psi.vercel.app
 
 ### Backend — Render
+
 - Docker-based deployment
 - URL: https://inventory-agent-iaqa.onrender.com
 - Note: Free tier sleeps after 15min inactivity, wakes in ~50s
 
 ### Full local stack — Docker
+
 ```bash
 docker-compose up -d    # Start all 6 services
 docker-compose down     # Stop all services
